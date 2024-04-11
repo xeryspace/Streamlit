@@ -33,22 +33,33 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
              f"<strong>Max Liquidation Price!!:</strong> {liquidation_price:.10f}"
              f"</div>", unsafe_allow_html=True)
 
-def visualize_levels(entry_prices, stop_loss, take_profit):
-    fig = go.Figure()
+def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss):
+    scenarios = [f"Entry {i+1}" for i in range(len(entry_prices))]
+    gains = [profit for profit in profits]
 
-    for i, price in enumerate(entry_prices, start=1):
-        fig.add_trace(go.Scatter(x=[i], y=[price], mode='markers', name=f"Entry {i}", marker=dict(size=10)))
+    fig = go.Figure(data=[go.Bar(x=scenarios, y=gains, text=[f"{gain:.2f}" for gain in gains], textposition='auto')])
 
-    fig.add_shape(type='line', x0=0, y0=stop_loss, x1=len(entry_prices) + 1, y1=stop_loss,
-                  line=dict(color='red', width=2, dash='dash'), name='Stop Loss')
+    fig.update_layout(title='Gains by Entry Scenario',
+                      xaxis_title='Scenario',
+                      yaxis_title='Gain',
+                      showlegend=False)
 
-    fig.add_shape(type='line', x0=0, y0=take_profit, x1=len(entry_prices) + 1, y1=take_profit,
-                  line=dict(color='green', width=2, dash='dash'), name='Take Profit')
+    st.plotly_chart(fig)
 
-    fig.update_layout(title='Entry Prices, Stop Loss, and Take Profit',
-                      xaxis_title='Entry',
-                      yaxis_title='Price',
-                      showlegend=True)
+    win_portfolio = portfolio_size + full_profit
+    lose_portfolio = portfolio_size - full_loss
+
+    fig = go.Figure(data=[
+        go.Bar(x=['Initial'], y=[portfolio_size], text=[f"{portfolio_size:.2f}"], textposition='auto',
+               marker_color='blue'),
+        go.Bar(x=['Win'], y=[win_portfolio], text=[f"{win_portfolio:.2f}"], textposition='auto', marker_color='green'),
+        go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
+    ])
+
+    fig.update_layout(title='Portfolio Size',
+                      xaxis_title='Scenario',
+                      yaxis_title='Portfolio Value',
+                      showlegend=False)
 
     st.plotly_chart(fig)
 
@@ -90,7 +101,7 @@ def main():
                 portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
             )
             print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price)
-            visualize_levels(entry_prices, stop_loss, take_profit)  # Add this line
+            visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss)  # Add this line
         else:
             st.warning("Please fill in all the required fields.")
 
