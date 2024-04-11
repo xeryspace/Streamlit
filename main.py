@@ -20,18 +20,13 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
     st.subheader("Results")
     for i, (price, pos, profit) in enumerate(zip(entry_prices, positions, profits), start=1):
         st.write(f"<div style='background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>"
-                 f"<strong>Entry {i}:</strong> {price:.10f} -> Position: {pos:.2f} // Profit: {profit:.2f}"
+                 f"<strong>Entry {i}:</strong> {price:.10f} -> Position: {pos:.2f}"
                  f"</div>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Full Profit", value=f"{full_profit:.2f}", delta=None, delta_color="normal")
-    with col2:
-        st.metric(label="Full Loss", value=f"{full_loss:.2f}", delta=None, delta_color="normal")
-
-    st.write(f"<div style='background-color: #f0f0f0; padding: 10px; border-radius: 5px;'>"
-             f"<strong>Max Liquidation Price!!:</strong> {liquidation_price:.10f}"
-             f"</div>", unsafe_allow_html=True)
+    st.write(f"- Full Profit: {full_profit:.2f}")
+    st.write(f"- Full Loss: {full_loss:.2f}")
+    st.write(f"- <span style='color: red;'><strong>Max Liquidation Price!!:</strong> {liquidation_price:.10f}</span>",
+             unsafe_allow_html=True)
 
 def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss):
     scenarios = [f"Entry {i+1}" for i in range(len(entry_prices))]
@@ -64,7 +59,7 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
                       showlegend=False)
 
     st.plotly_chart(fig)
-    
+
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
