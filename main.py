@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 
-def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
+def calc_positions(portfolio_size,  risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
                    liquidation_buffer):
     risk_amount = portfolio_size * (risk_level / 100)
     risk_per_entry = [risk_amount * prop for prop in entry_proportions]
