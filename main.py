@@ -1,5 +1,5 @@
 import streamlit as st
-
+import plotly.graph_objects as go
 
 def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
                    liquidation_buffer):
@@ -33,6 +33,24 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
              f"<strong>Max Liquidation Price!!:</strong> {liquidation_price:.10f}"
              f"</div>", unsafe_allow_html=True)
 
+def visualize_levels(entry_prices, stop_loss, take_profit):
+    fig = go.Figure()
+
+    for i, price in enumerate(entry_prices, start=1):
+        fig.add_trace(go.Scatter(x=[i], y=[price], mode='markers', name=f"Entry {i}", marker=dict(size=10)))
+
+    fig.add_shape(type='line', x0=0, y0=stop_loss, x1=len(entry_prices) + 1, y1=stop_loss,
+                  line=dict(color='red', width=2, dash='dash'), name='Stop Loss')
+
+    fig.add_shape(type='line', x0=0, y0=take_profit, x1=len(entry_prices) + 1, y1=take_profit,
+                  line=dict(color='green', width=2, dash='dash'), name='Take Profit')
+
+    fig.update_layout(title='Entry Prices, Stop Loss, and Take Profit',
+                      xaxis_title='Entry',
+                      yaxis_title='Price',
+                      showlegend=True)
+
+    st.plotly_chart(fig)
 
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
@@ -72,6 +90,7 @@ def main():
                 portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
             )
             print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price)
+            visualize_levels(entry_prices, stop_loss, take_profit)  # Add this line
         else:
             st.warning("Please fill in all the required fields.")
 
