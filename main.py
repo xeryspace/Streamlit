@@ -7,10 +7,10 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
     risk_per_entry = [risk_amount * prop for prop in entry_proportions]
     positions = [risk / ((price - stop_loss) / price) for price, risk in zip(entry_prices, risk_per_entry)]
     profits = [sum(positions[:i + 1]) * (
-                take_profit - sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
-            positions[:i + 1])) / (
-                           sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
-                       positions[:i + 1])) for i in range(len(entry_prices))]
+            take_profit - sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
+        positions[:i + 1])) / (
+                       sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
+                   positions[:i + 1])) for i in range(len(entry_prices))]
     full_profit, full_loss = profits[-1], portfolio_size * (risk_level / 100)
     liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
     return positions, profits, full_profit, full_loss, liquidation_price
@@ -49,8 +49,8 @@ def main():
         portfolio_size = st.number_input("Portfolio Size", value=default_portfolio_size)
         risk_level = st.number_input("Risk Level", value=3.0)
         entry_prices = st.text_input("Entry Prices (comma-separated)")
-        stop_loss = st.number_input("Stop Loss")
-        take_profit = st.number_input("Take Profit")
+        stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
+        take_profit = st.number_input("Take Profit", step=0.0000001, format="%0.7f")
         liquidation_buffer = st.number_input("Liquidation Buffer", value=10.0)
 
         num_entries = st.selectbox("Number of Entries", options=[1, 2, 3])
