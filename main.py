@@ -1,6 +1,10 @@
 import streamlit as st
 
 
+def round_to_precision(value, precision):
+    return round(value, precision)
+
+
 def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
                    liquidation_buffer):
     risk_amount = portfolio_size * (risk_level / 100)
@@ -30,7 +34,7 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
         st.metric(label="Full Loss", value=f"{full_loss:.2f}", delta=None, delta_color="normal")
 
     st.write(f"<div style='background-color: #f0f0f0; padding: 10px; border-radius: 5px;'>"
-             f"<strong>Liquidation Price:</strong> {liquidation_price:.5f}"
+             f"<strong>Max Liquidation Price!!:</strong> {liquidation_price:.5f}"
              f"</div>", unsafe_allow_html=True)
 
 
@@ -67,7 +71,9 @@ def main():
 
     if st.button("Calculate"):
         if entry_prices and stop_loss and take_profit:
-            entry_prices = [float(x.strip()) for x in entry_prices.split(",")]
+            entry_prices = [round_to_precision(float(x.strip()), 5) for x in entry_prices.split(",")]
+            stop_loss = round_to_precision(stop_loss, 5)
+            take_profit = round_to_precision(take_profit, 5)
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
                 portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
             )
