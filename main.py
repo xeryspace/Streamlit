@@ -40,18 +40,35 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
                       showlegend=False)
 
     st.plotly_chart(fig)
+    if len(profits) == 1:
+        win_all = portfolio_size + full_profit
+        lose_portfolio = portfolio_size - full_loss
+        fig = go.Figure(data=[
+            go.Bar(x=['Win'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto',marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',marker_color='red')
+        ])
+    elif len(profits) == 2:
+        win_e1 = portfolio_size + profits[0]
+        win_all = portfolio_size + full_profit
+        lose_portfolio = portfolio_size - full_loss
 
-    win_e1 = portfolio_size + profits[0]
-    win_e1_e2 = portfolio_size + profits[1]
-    win_all = portfolio_size + full_profit
-    lose_portfolio = portfolio_size - full_loss
+        fig = go.Figure(data=[
+            go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto',marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',marker_color='red')
+        ])
+    else:
+        win_e1 = portfolio_size + profits[0]
+        win_e1_e2 = portfolio_size + profits[1]
+        win_all = portfolio_size + full_profit
+        lose_portfolio = portfolio_size - full_loss
 
-    fig = go.Figure(data=[
-        go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
-        go.Bar(x=['Win (E1+E2)'], y=[win_e1_e2], text=[f"{win_e1_e2:.2f}"], textposition='auto', marker_color='green'),
-        go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
-        go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
-    ])
+        fig = go.Figure(data=[
+            go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Win (E1+E2)'], y=[win_e1_e2], text=[f"{win_e1_e2:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
+        ])
 
     fig.update_layout(title='Portfolio Size',
                       xaxis_title='Scenario',
