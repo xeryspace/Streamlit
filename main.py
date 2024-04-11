@@ -38,8 +38,15 @@ def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
 
+    user = st.radio("Select User", ("Igor", "Erik"))
+
+    if user == "Igor":
+        default_portfolio_size = 5000.0
+    else:
+        default_portfolio_size = 100.0
+
     with st.expander("Input Parameters", expanded=True):
-        portfolio_size = st.number_input("Portfolio Size", value=5000.0)
+        portfolio_size = st.number_input("Portfolio Size", value=default_portfolio_size)
         risk_level = st.number_input("Risk Level", value=3.0)
         entry_prices = st.text_input("Entry Prices (comma-separated)")
         stop_loss = st.number_input("Stop Loss")
