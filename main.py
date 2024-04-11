@@ -46,13 +46,15 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
 
     st.plotly_chart(fig)
 
-    win_portfolio = portfolio_size + full_profit
+    win_e1 = portfolio_size + profits[0]
+    win_e1_e2 = portfolio_size + profits[1]
+    win_all = portfolio_size + full_profit
     lose_portfolio = portfolio_size - full_loss
 
     fig = go.Figure(data=[
-        go.Bar(x=['Initial'], y=[portfolio_size], text=[f"{portfolio_size:.2f}"], textposition='auto',
-               marker_color='blue'),
-        go.Bar(x=['Win'], y=[win_portfolio], text=[f"{win_portfolio:.2f}"], textposition='auto', marker_color='green'),
+        go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
+        go.Bar(x=['Win (E1+E2)'], y=[win_e1_e2], text=[f"{win_e1_e2:.2f}"], textposition='auto', marker_color='green'),
+        go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
         go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
     ])
 
@@ -62,7 +64,7 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
                       showlegend=False)
 
     st.plotly_chart(fig)
-
+    
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
