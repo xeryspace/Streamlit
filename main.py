@@ -33,19 +33,34 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
              f"<strong>Liquidation Price:</strong> {liquidation_price:.5f}"
              f"</div>", unsafe_allow_html=True)
 
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def register():
+    st.sidebar.subheader("Register")
+    new_username = st.sidebar.text_input("Username")
+    new_password = st.sidebar.text_input("Password", type="password")
+    confirm_password = st.sidebar.text_input("Confirm Password", type="password")
+    if st.sidebar.button("Register"):
+        if new_password == confirm_password:
+            hashed_password = hash_password(new_password)
+            st.session_state.users[new_username] = hashed_password
+            st.sidebar.success("Registration successful. Please log in.")
+        else:
+            st.sidebar.error("Passwords do not match.")
 
 def login():
     st.sidebar.subheader("Login")
     username = st.sidebar.text_input("Username")
     password = st.sidebar.text_input("Password", type="password")
     if st.sidebar.button("Login"):
-        if username == "admin" and password == "password":
+        if username in st.session_state.users and hash_password(password) == st.session_state.users[username]:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.experimental_rerun()
         else:
             st.sidebar.error("Invalid username or password")
-
+            
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
