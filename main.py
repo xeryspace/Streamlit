@@ -81,7 +81,7 @@ def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
 
-    user = st.radio("Select User", ("Igor", "Erik"))
+    user = st.radio("Select User", ("Igor s", "Erik"))
 
     if user == "Igor":
         default_portfolio_size = 700.0
