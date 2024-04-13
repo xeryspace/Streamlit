@@ -84,7 +84,7 @@ def main():
     user = st.radio("Select User", ("Igor", "Erik"))
 
     if user == "Igor":
-        default_portfolio_size = 5000.0
+        default_portfolio_size = 700.0
     else:
         default_portfolio_size = 100.0
 
