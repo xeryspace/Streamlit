@@ -106,6 +106,7 @@ def main():
                     entry_prices.append(original_entry_prices[i] + price_diff * j)
             entry_prices.append(original_entry_prices[-1])
 
+
             num_entries = len(entry_prices)
             entry_proportions = [1/num_entries] * num_entries
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
