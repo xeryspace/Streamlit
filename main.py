@@ -87,6 +87,8 @@ def main():
     else:
         default_portfolio_size = 100.0
 
+    add_entries = st.checkbox("Add entries between provided ones", value=True)
+
     with st.expander("Input Parameters", expanded=True):
         portfolio_size = st.number_input("Portfolio Size", value=default_portfolio_size)
         risk_level = st.number_input("Risk Level", value=3.0)
@@ -98,14 +100,17 @@ def main():
     if st.button("Calculate"):
         if entry_prices and stop_loss and take_profit:
             original_entry_prices = [float(x.strip()) for x in entry_prices.split(",")]
-            entry_prices = []
-            for i in range(len(original_entry_prices) - 1):
-                entry_prices.append(original_entry_prices[i])
-                price_diff = (original_entry_prices[i + 1] - original_entry_prices[i]) / 5
-                for j in range(1, 5):
-                    entry_prices.append(original_entry_prices[i] + price_diff * j)
-            entry_prices.append(original_entry_prices[-1])
 
+            if add_entries:
+                entry_prices = []
+                for i in range(len(original_entry_prices) - 1):
+                    entry_prices.append(original_entry_prices[i])
+                    price_diff = (original_entry_prices[i + 1] - original_entry_prices[i]) / 5
+                    for j in range(1, 5):
+                        entry_prices.append(original_entry_prices[i] + price_diff * j)
+                entry_prices.append(original_entry_prices[-1])
+            else:
+                entry_prices = original_entry_prices
 
             num_entries = len(entry_prices)
             entry_proportions = [1/num_entries] * num_entries
