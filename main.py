@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 
-def calc_positions(portfolio_size,  risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
+def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
                    liquidation_buffer):
     risk_amount = portfolio_size * (risk_level / 100)
     risk_per_entry = [risk_amount * prop for prop in entry_proportions]
@@ -16,19 +16,24 @@ def calc_positions(portfolio_size,  risk_level, entry_prices, stop_loss, entry_p
     return positions, profits, full_profit, full_loss, liquidation_price
 
 
-def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price):
+def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices=None):
     st.subheader("Results")
     for i, (price, pos, profit) in enumerate(zip(entry_prices, positions, profits), start=1):
-        st.write(f"<div style='background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>"
-                 f"<strong>Entry {i}:</strong> {price:.10f} -> Position: {pos:.2f}"
-                 f"</div>", unsafe_allow_html=True)
+        if original_entry_prices and price in original_entry_prices:
+            st.write(f"<div style='background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>"
+                     f"<strong>Entry {i}:</strong> {price:.10f} -> Position: {pos:.2f}"
+                     f"</div>", unsafe_allow_html=True)
+        else:
+            st.write(f"<div style='background-color: #e0e0e0; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>"
+                     f"<strong>Entry {i}:</strong> {price:.10f} -> Position: {pos:.2f}"
+                     f"</div>", unsafe_allow_html=True)
 
     st.write(f"- Full Profit: {full_profit:.2f}")
     st.write(f"- Full Loss: {full_loss:.2f}")
     st.write(f"- <span style='color: red;'><strong>Max Liquidation Price!!:</strong> {liquidation_price:.10f}</span>",
              unsafe_allow_html=True)
 
-def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss):
+def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices=None):
     scenarios = [f"Entry {i+1}" for i in range(len(entry_prices))]
     gains = [profit for profit in profits]
 
@@ -40,12 +45,13 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
                       showlegend=False)
 
     st.plotly_chart(fig)
+
     if len(profits) == 1:
         win_all = portfolio_size + full_profit
         lose_portfolio = portfolio_size - full_loss
         fig = go.Figure(data=[
-            go.Bar(x=['Win'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto',marker_color='green'),
-            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',marker_color='red')
+            go.Bar(x=['Win'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
     elif len(profits) == 2:
         win_e1 = portfolio_size + profits[0]
@@ -54,8 +60,8 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
 
         fig = go.Figure(data=[
             go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
-            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto',marker_color='green'),
-            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',marker_color='red')
+            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
     else:
         win_e1 = portfolio_size + profits[0]
@@ -70,21 +76,14 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
             go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
 
-    fig.update_layout(title='Portfolio Size',
-                      xaxis_title='Scenario',
-                      yaxis_title='Portfolio Value',
-                      showlegend=False)
-
-    st.plotly_chart(fig)
-
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
 
-    user = st.radio("Select User", ("Igor s", "Erik"))
+    user = st.radio("Select User", ("Igor", "Erik"))
 
     if user == "Igor":
-        default_portfolio_size = 700.0
+        default_portfolio_size = 500.0
     else:
         default_portfolio_size = 100.0
 
@@ -96,26 +95,24 @@ def main():
         take_profit = st.number_input("Take Profit", step=0.0000001, format="%0.7f")
         liquidation_buffer = st.number_input("Liquidation Buffer", value=10.0)
 
-        num_entries = st.selectbox("Number of Entries", options=[1, 2, 3])
-        if num_entries == 1:
-            entry_proportions = [1]
-        elif num_entries == 2:
-            entry_proportions = [0.5, 0.5]
-        else:
-            proportion_option = st.selectbox("Entry Proportion Option", options=["1/3 Split", "Rising DCA"])
-            if proportion_option == "1/3 Split":
-                entry_proportions = [0.33, 0.33, 0.34]
-            else:
-                entry_proportions = [0.15, 0.35, 0.5]
-
     if st.button("Calculate"):
         if entry_prices and stop_loss and take_profit:
-            entry_prices = [float(x.strip()) for x in entry_prices.split(",")]
+            original_entry_prices = [float(x.strip()) for x in entry_prices.split(",")]
+            entry_prices = []
+            for i in range(len(original_entry_prices) - 1):
+                entry_prices.append(original_entry_prices[i])
+                price_diff = (original_entry_prices[i + 1] - original_entry_prices[i]) / 5
+                for j in range(1, 5):
+                    entry_prices.append(original_entry_prices[i] + price_diff * j)
+            entry_prices.append(original_entry_prices[-1])
+
+            num_entries = len(entry_prices)
+            entry_proportions = [1/num_entries] * num_entries
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
                 portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
             )
-            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price)
-            visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss)  # Add this line
+            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices)
+            visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices)
         else:
             st.warning("Please fill in all the required fields.")
 
