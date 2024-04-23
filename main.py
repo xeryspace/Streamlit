@@ -30,8 +30,6 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
 
     st.write(f"- Full Profit: {full_profit:.2f}")
     st.write(f"- Full Loss: {full_loss:.2f}")
-    st.write(f"- <span style='color: red;'><strong>Max Liquidation Price!!:</strong> {liquidation_price:.10f}</span>",
-             unsafe_allow_html=True)
 
 def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices=None):
     scenarios = [f"Entry {i+1}" for i in range(len(entry_prices))]
@@ -121,19 +119,13 @@ def main():
     add_entries = st.checkbox("Add entries between provided ones", value=True)
 
     with st.expander("Input Parameters", expanded=True):
-        portfolio_size = st.number_input("Portfolio Size", value=default_portfolio_size)
-        risk_level = st.number_input("Risk Level", value=3.0)
+        portfolio_size = st.number_input("Current Portfolio Size", value=default_portfolio_size)
+        previous_win_profit = st.number_input("Previous Winning Trade Profit (Optional)", value=0.0)
+        base_risk_level = st.number_input("Base Risk Level (%)", value=3.0)
         entry_prices = st.text_input("Entry Prices (comma-separated)")
         stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
         take_profit = st.number_input("Take Profit", step=0.0000001, format="%0.7f")
-        liquidation_buffer = st.number_input("Liquidation Buffer", value=10.0)
-
-    with st.expander("Compound Trading Strategy"):
-        enable_compound = st.checkbox("Enable Compound Trading")
-        if enable_compound:
-            compound_risk_level = st.number_input("Compound Risk Level", value=5.0)
-            compound_win_rate = st.number_input("Compound Win Rate", value=0.6)
-            compound_trades = st.number_input("Number of Compound Trades", value=10, step=1)
+        liquidation_buffer = 1
 
     if st.button("Calculate"):
         if entry_prices and stop_loss and take_profit:
@@ -150,10 +142,19 @@ def main():
             else:
                 entry_prices = original_entry_prices
 
+            # Calculate the risk tolerance based on the current portfolio value and previous winning trade's profit
+            if previous_win_profit > 0:
+                old_portfolio_size = portfolio_size - previous_win_profit
+            else:
+                old_portfolio_size = portfolio_size
+
+            og_risk_value = old_portfolio_size * (1 - base_risk_level / 100)
+            risk_tolerance = (portfolio_size - og_risk_value) / portfolio_size * 100
+
             num_entries = len(entry_prices)
             entry_proportions = [1/num_entries] * num_entries
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
-                portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
+                portfolio_size, risk_tolerance, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
             )
             print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices)
             visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices)
@@ -161,12 +162,6 @@ def main():
             risk_reward_ratio = calc_risk_reward(entry_prices, stop_loss, take_profit)
             st.write(f"- Risk-Reward Ratio: {risk_reward_ratio:.2f}")
 
-            if enable_compound:
-                compound_results = simulate_compound_strategy(portfolio_size, compound_risk_level, compound_win_rate, compound_trades)
-                st.subheader("Compound Trading Strategy Results")
-                st.write(f"- Final Portfolio Value: {compound_results['final_portfolio']:.2f}")
-                st.write(f"- Total Gains: {compound_results['total_gains']:.2f}")
-                st.write(f"- Total Losses: {compound_results['total_losses']:.2f}")
         else:
             st.warning("Please fill in all the required fields.")
 

@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+import plotly.graph_objects as go
 
 def simulate_trades(budget, winrate, risk, num_trades, rr_ratio):
     trades = []
@@ -19,31 +20,24 @@ def simulate_trades(budget, winrate, risk, num_trades, rr_ratio):
                 profit_amount = total_risk * rr_ratio
                 budget += profit_amount
                 consecutive_wins = 2
-            else:
-                total_risk = risk_amount + (2 * profit_amount)
-                profit_amount = total_risk * rr_ratio
-                budget += profit_amount
-                consecutive_wins = 3
 
-            if consecutive_wins == 3:
+            if consecutive_wins == 2:
                 consecutive_wins = 0
                 risk_amount = 0
                 profit_amount = 0
 
-            trades.append(("W", budget))
+            trades.append(budget)
         else:
             if consecutive_wins == 0:
                 loss = budget * risk
-            elif consecutive_wins == 1:
-                loss = risk_amount + profit_amount
             else:
-                loss = risk_amount + (2 * profit_amount)
+                loss = risk_amount + profit_amount
 
             budget -= loss
             consecutive_wins = 0
             risk_amount = 0
             profit_amount = 0
-            trades.append(("L", budget))
+            trades.append(budget)
 
     return trades
 
@@ -59,11 +53,12 @@ def main():
     if st.button("Simulate"):
         trades = simulate_trades(budget, winrate, risk, num_trades, rr_ratio)
 
-        st.subheader("Trade Results")
-        for i, trade in enumerate(trades):
-            st.write(f"Trade {i+1}: {trade[0]} - Portfolio: {trade[1]:.2f}")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(y=trades, mode='lines+markers', name='Portfolio Value'))
+        fig.update_layout(title='Portfolio Value Over Trades', xaxis_title='Trade Number', yaxis_title='Portfolio Value')
+        st.plotly_chart(fig)
 
-        final_portfolio = trades[-1][1]
+        final_portfolio = trades[-1]
         st.subheader(f"Final Portfolio: {final_portfolio:.2f}")
 
 if __name__ == "__main__":
