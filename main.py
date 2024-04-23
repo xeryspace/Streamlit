@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.graph_objects as go
+import random
 
 def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
                    liquidation_buffer):
@@ -14,7 +15,6 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
     full_profit, full_loss = profits[-1], portfolio_size * (risk_level / 100)
     liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
     return positions, profits, full_profit, full_loss, liquidation_price
-
 
 def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices=None):
     st.subheader("Results")
@@ -76,6 +76,37 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
             go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
 
+def calc_risk_reward(entry_prices, stop_loss, take_profit):
+    avg_entry_price = sum(entry_prices) / len(entry_prices)
+    risk = abs(avg_entry_price - stop_loss) / avg_entry_price
+    reward = abs(take_profit - avg_entry_price) / avg_entry_price
+    risk_reward_ratio = reward / risk
+    return risk_reward_ratio
+
+def simulate_compound_strategy(portfolio_size, risk_level, win_rate, num_trades):
+    portfolio = portfolio_size
+    total_gains = 0
+    total_losses = 0
+
+    for _ in range(num_trades):
+        risk_amount = portfolio * (risk_level / 100)
+        if random.random() < win_rate:
+            # Win trade
+            gain = risk_amount * 3  # Assuming a 1:3 risk-reward ratio for winning trades
+            portfolio += gain
+            total_gains += gain
+        else:
+            # Lose trade
+            loss = risk_amount
+            portfolio -= loss
+            total_losses += loss
+
+    return {
+        'final_portfolio': portfolio,
+        'total_gains': total_gains,
+        'total_losses': total_losses
+    }
+
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
@@ -96,6 +127,13 @@ def main():
         stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
         take_profit = st.number_input("Take Profit", step=0.0000001, format="%0.7f")
         liquidation_buffer = st.number_input("Liquidation Buffer", value=10.0)
+
+    with st.expander("Compound Trading Strategy"):
+        enable_compound = st.checkbox("Enable Compound Trading")
+        if enable_compound:
+            compound_risk_level = st.number_input("Compound Risk Level", value=5.0)
+            compound_win_rate = st.number_input("Compound Win Rate", value=0.6)
+            compound_trades = st.number_input("Number of Compound Trades", value=10, step=1)
 
     if st.button("Calculate"):
         if entry_prices and stop_loss and take_profit:
@@ -119,6 +157,16 @@ def main():
             )
             print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices)
             visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices)
+
+            risk_reward_ratio = calc_risk_reward(entry_prices, stop_loss, take_profit)
+            st.write(f"- Risk-Reward Ratio: {risk_reward_ratio:.2f}")
+
+            if enable_compound:
+                compound_results = simulate_compound_strategy(portfolio_size, compound_risk_level, compound_win_rate, compound_trades)
+                st.subheader("Compound Trading Strategy Results")
+                st.write(f"- Final Portfolio Value: {compound_results['final_portfolio']:.2f}")
+                st.write(f"- Total Gains: {compound_results['total_gains']:.2f}")
+                st.write(f"- Total Losses: {compound_results['total_losses']:.2f}")
         else:
             st.warning("Please fill in all the required fields.")
 
