@@ -184,15 +184,12 @@ def position_calculator():
             print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices)
             visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices)
 
-            # Display the calculated take profit price
-            st.write(f"<strong>Take Profit:</strong> {take_profit:.10f}", unsafe_allow_html=True)
-
             # Display the summary for Tradingview
             st.subheader("Summary for Tradingview")
             for i, price in enumerate(entry_prices, start=1):
-                st.write(f"Entry {i}: {price:.10f}")
-            st.write(f"Stop Loss: {stop_loss:.10f}")
-            st.write(f"Take Profit: {take_profit:.10f}")
+                st.write(f"E{i}: {price:.4f}")
+            st.write(f"SL: {stop_loss:.4f}")
+            st.write(f"TP: {take_profit:.4f}")
 
         else:
             st.warning("Please fill in all the required fields.")
