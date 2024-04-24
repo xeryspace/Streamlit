@@ -137,22 +137,17 @@ def main():
 def position_calculator():
     st.subheader("Position Calculator")
 
-    user = st.radio("Select User", ("Igor", "Erik"))
-
-    if user == "Igor":
-        default_portfolio_size = 500.0
-    else:
-        default_portfolio_size = 100.0
+    default_portfolio_size = 100.0
 
     add_entries = st.checkbox("Add entries between provided ones", value=True)
 
     with st.expander("Input Parameters", expanded=True):
         portfolio_size = st.number_input("Current Portfolio Size", value=default_portfolio_size)
         previous_win_profit = st.number_input("Previous Winning Trade Profit (Optional)", value=0.0)
-        base_risk_level = st.number_input("Base Risk Level (%)", value=3.0)
+        base_risk_level = st.number_input("Base Risk Level (%)", value=1.5)
         entry_prices = st.text_input("Entry Prices (comma-separated)")
         stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
-        risk_reward_ratio = st.slider("Risk-Reward Ratio", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
+        risk_reward_ratio = st.slider("Risk-Reward Ratio", min_value=1.0, max_value=5.0, value=1.5, step=0.1)
         liquidation_buffer = 1
 
     if st.button("Calculate"):
