@@ -2,7 +2,6 @@ import streamlit as st
 import plotly.graph_objects as go
 import random
 
-
 def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profit,
                    liquidation_buffer):
     risk_amount = portfolio_size * (risk_level / 100)
@@ -17,9 +16,7 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
     liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
     return positions, profits, full_profit, full_loss, liquidation_price
 
-
-def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price,
-                  original_entry_prices=None):
+def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices=None):
     st.subheader("Results")
     for i, (price, pos, profit) in enumerate(zip(entry_prices, positions, profits), start=1):
         if original_entry_prices and price in original_entry_prices:
@@ -34,9 +31,8 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
     st.write(f"- Full Profit: {full_profit:.2f}")
     st.write(f"- Full Loss: {full_loss:.2f}")
 
-
 def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices=None):
-    scenarios = [f"Entry {i + 1}" for i in range(len(entry_prices))]
+    scenarios = [f"Entry {i+1}" for i in range(len(entry_prices))]
     gains = [profit for profit in profits]
 
     fig = go.Figure(data=[go.Bar(x=scenarios, y=gains, text=[f"{gain:.2f}" for gain in gains], textposition='auto')])
@@ -53,8 +49,7 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
         lose_portfolio = portfolio_size - full_loss
         fig = go.Figure(data=[
             go.Bar(x=['Win'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
-            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',
-                   marker_color='red')
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
     elif len(profits) == 2:
         win_e1 = portfolio_size + profits[0]
@@ -63,10 +58,8 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
 
         fig = go.Figure(data=[
             go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
-            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto',
-                   marker_color='green'),
-            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',
-                   marker_color='red')
+            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
     else:
         win_e1 = portfolio_size + profits[0]
@@ -76,40 +69,52 @@ def visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_los
 
         fig = go.Figure(data=[
             go.Bar(x=['Win (E1)'], y=[win_e1], text=[f"{win_e1:.2f}"], textposition='auto', marker_color='green'),
-            go.Bar(x=['Win (E1+E2)'], y=[win_e1_e2], text=[f"{win_e1_e2:.2f}"], textposition='auto',
-                   marker_color='green'),
-            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto',
-                   marker_color='green'),
-            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto',
-                   marker_color='red')
+            go.Bar(x=['Win (E1+E2)'], y=[win_e1_e2], text=[f"{win_e1_e2:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Win (All Entries)'], y=[win_all], text=[f"{win_all:.2f}"], textposition='auto', marker_color='green'),
+            go.Bar(x=['Lose'], y=[lose_portfolio], text=[f"{lose_portfolio:.2f}"], textposition='auto', marker_color='red')
         ])
 
-
-def calc_take_profit(entry_prices, stop_loss, risk_reward_ratio):
+def calc_risk_reward(entry_prices, stop_loss, take_profit):
     avg_entry_price = sum(entry_prices) / len(entry_prices)
-    risk = abs(avg_entry_price - stop_loss)
-    take_profit = avg_entry_price + (risk * risk_reward_ratio)
-    return take_profit
+    risk = abs(avg_entry_price - stop_loss) / avg_entry_price
+    reward = abs(take_profit - avg_entry_price) / avg_entry_price
+    risk_reward_ratio = reward / risk
+    return risk_reward_ratio
 
+def simulate_compound_strategy(portfolio_size, risk_level, win_rate, num_trades):
+    portfolio = portfolio_size
+    total_gains = 0
+    total_losses = 0
+
+    for _ in range(num_trades):
+        risk_amount = portfolio * (risk_level / 100)
+        if random.random() < win_rate:
+            # Win trade
+            gain = risk_amount * 3  # Assuming a 1:3 risk-reward ratio for winning trades
+            portfolio += gain
+            total_gains += gain
+        else:
+            # Lose trade
+            loss = risk_amount
+            portfolio -= loss
+            total_losses += loss
+
+    return {
+        'final_portfolio': portfolio,
+        'total_gains': total_gains,
+        'total_losses': total_losses
+    }
 
 def main():
-    st.set_page_config(page_title="Trading Tools", page_icon=":calculator:", layout="centered")
-    st.title("Trading Tools")
+    st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
+    st.title("Position Calculator")
 
-    # Create a sidebar with a selectbox
-    script_options = ["Position Calculator", "Risk-Reward Calculator"]
-    selected_script = st.sidebar.selectbox("Select a script", script_options)
+    user = st.radio("Select User", ("Igor", "Erik"))
 
-    if selected_script == "Position Calculator":
-        position_calculator()
-    elif selected_script == "Risk-Reward Calculator":
-        risk_reward_calculator()
-
-
-def position_calculator():
-    st.subheader("Position Calculator")
-
-    default_portfolio_size = 100.0
+    if user == "Igor":
+        default_portfolio_size = 500.0
+    else:
+        default_portfolio_size = 100.0
 
     add_entries = st.checkbox("Add entries between provided ones", value=True)
 
@@ -119,11 +124,11 @@ def position_calculator():
         base_risk_level = st.number_input("Base Risk Level (%)", value=3.0)
         entry_prices = st.text_input("Entry Prices (comma-separated)")
         stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
-        risk_reward_ratio = st.slider("Risk-Reward Ratio", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
+        take_profit = st.number_input("Take Profit", step=0.0000001, format="%0.7f")
         liquidation_buffer = 1
 
     if st.button("Calculate"):
-        if entry_prices and stop_loss:
+        if entry_prices and stop_loss and take_profit:
             original_entry_prices = [float(x.strip()) for x in entry_prices.split(",")]
 
             if add_entries:
@@ -146,27 +151,19 @@ def position_calculator():
             og_risk_value = old_portfolio_size * (1 - base_risk_level / 100)
             risk_tolerance = (portfolio_size - og_risk_value) / portfolio_size * 100
 
-            take_profit = calc_take_profit(entry_prices, stop_loss, risk_reward_ratio)
-
             num_entries = len(entry_prices)
-            entry_proportions = [1 / num_entries] * num_entries
+            entry_proportions = [1/num_entries] * num_entries
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
-                portfolio_size, risk_tolerance, entry_prices, stop_loss, entry_proportions, take_profit,
-                liquidation_buffer
+                portfolio_size, risk_tolerance, entry_prices, stop_loss, entry_proportions, take_profit, liquidation_buffer
             )
-            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price,
-                          original_entry_prices)
+            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, original_entry_prices)
             visualize_gains(entry_prices, profits, portfolio_size, full_profit, full_loss, original_entry_prices)
 
-            # Display the calculated take profit price
-            st.write(f"<strong>Take Profit:</strong> {take_profit:.10f}", unsafe_allow_html=True)
+            risk_reward_ratio = calc_risk_reward(entry_prices, stop_loss, take_profit)
+            st.write(f"- Risk-Reward Ratio: {risk_reward_ratio:.2f}")
 
         else:
             st.warning("Please fill in all the required fields.")
-
-
-def risk_reward_calculator():
-    st.subheader("Risk-Reward Calculator")
 
 
 if __name__ == "__main__":
