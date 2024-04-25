@@ -80,42 +80,44 @@ def calc_take_profit(entry_prices, stop_loss, risk_reward_ratio):
     take_profit = avg_entry_price + (risk * risk_reward_ratio)
     return take_profit
 
-def simulate_trades(budget, winrate, risk, num_trades, rr_ratio):
+def simulate_trades(budget, winrate, risk, num_months, trades_per_month, additional_amount, rr_ratio):
     trades = []
     consecutive_wins = 0
     risk_amount = 0
     profit_amount = 0
 
-    for _ in range(num_trades):
-        if random.random() < winrate:
-            if consecutive_wins == 0:
-                risk_amount = budget * risk
-                profit_amount = risk_amount * rr_ratio
-                budget += profit_amount
-                consecutive_wins = 1
-            elif consecutive_wins == 1:
-                total_risk = risk_amount + profit_amount
-                profit_amount = total_risk * rr_ratio
-                budget += profit_amount
-                consecutive_wins = 2
+    for month in range(num_months):
+        budget += additional_amount
+        for _ in range(trades_per_month):
+            if random.random() < winrate:
+                if consecutive_wins == 0:
+                    risk_amount = budget * risk
+                    profit_amount = risk_amount * rr_ratio
+                    budget += profit_amount
+                    consecutive_wins = 1
+                elif consecutive_wins == 1:
+                    total_risk = risk_amount + profit_amount
+                    profit_amount = total_risk * rr_ratio
+                    budget += profit_amount
+                    consecutive_wins = 2
 
-            if consecutive_wins == 2:
+                if consecutive_wins == 2:
+                    consecutive_wins = 0
+                    risk_amount = 0
+                    profit_amount = 0
+
+                trades.append(budget)
+            else:
+                if consecutive_wins == 0:
+                    loss = budget * risk
+                else:
+                    loss = risk_amount + profit_amount
+
+                budget -= loss
                 consecutive_wins = 0
                 risk_amount = 0
                 profit_amount = 0
-
-            trades.append(budget)
-        else:
-            if consecutive_wins == 0:
-                loss = budget * risk
-            else:
-                loss = risk_amount + profit_amount
-
-            budget -= loss
-            consecutive_wins = 0
-            risk_amount = 0
-            profit_amount = 0
-            trades.append(budget)
+                trades.append(budget)
 
     return trades
 
@@ -220,11 +222,13 @@ def compounding_trade_simulator():
     budget = st.number_input("Portfolio Size", min_value=1, value=100, step=1)
     winrate = st.number_input("Winrate", min_value=0.0, max_value=1.0, value=0.6, step=0.01)
     risk = st.number_input("Risk", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
-    num_trades = st.number_input("Number of Trades", min_value=1, value=10, step=1)
+    num_months = st.number_input("Number of months to trade", min_value=1, value=12, step=1)
+    trades_per_month = st.number_input("Trades per month", min_value=1, value=5, step=1)
+    additional_amount = st.number_input("Additional amount to add each month", min_value=0.0, value=0.0, step=0.1)
     rr_ratio = st.number_input("Risk/Reward Ratio", min_value=0.1, value=2.0, step=0.1)
 
     if st.button("Simulate"):
-        trades = simulate_trades(budget, winrate, risk, num_trades, rr_ratio)
+        trades = simulate_trades(budget, winrate, risk, num_months, trades_per_month, additional_amount, rr_ratio)
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(y=trades, mode='lines+markers', name='Portfolio Value'))
