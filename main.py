@@ -36,16 +36,12 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
 def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits, portfolio_size):
     st.subheader("Results")
 
-    # Use a pandas DataFrame to create the table
     tp_headers = [""] + [f"TP {i + 1}: {tp:.4f}" for i, tp in enumerate(take_profits)]
     table_data = []
 
     for i in range(len(entry_prices)):
         row = [f"Entry {i + 1} ({entry_prices[i]:.2f}) - Position: {positions[i]:.2f}"]
-        if i == 0:
-            row.extend([f"{profit:.4f}" for profit, coins in profits[i]])
-        else:
-            row.extend([f"{profit:.4f}" for profit, coins in profits[-1]])
+        row.extend([f"{profit:.4f}" for profit, coins in profits[i]])
         table_data.append(row)
 
     df = pd.DataFrame(table_data, columns=tp_headers)
@@ -79,7 +75,7 @@ def main():
         entry_prices = st.text_input("Entry Prices (comma-separated)")
         stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
         take_profits = st.text_input("Take Profits (comma-separated)")
-        liquidation_buffer = st.number_input("Liquidation Buffer", value=10.0)
+        liquidation_buffer = 1
 
     if st.button("Calculate"):
         if entry_prices and stop_loss and take_profits:
@@ -97,4 +93,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
