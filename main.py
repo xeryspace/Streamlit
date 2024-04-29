@@ -1,4 +1,7 @@
 import streamlit as st
+import pandas as pd
+import random
+
 
 def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits,
                    liquidation_buffer, additional_risk):
@@ -30,11 +33,12 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
     return positions, profits, full_profit, full_loss, liquidation_price
 
 
-def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits):
+def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits, portfolio_size):
     st.subheader("Results")
 
+    # Use a pandas DataFrame to create the table
     tp_headers = [""] + [f"TP {i + 1}: {tp:.4f}" for i, tp in enumerate(take_profits)]
-    table_data = [tp_headers]
+    table_data = []
 
     for i in range(len(entry_prices)):
         row = [f"Entry {i + 1} ({entry_prices[i]:.2f}) - Position: {positions[i]:.2f}"]
@@ -44,19 +48,18 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
             row.extend([f"{profit:.4f}" for profit, coins in profits[-1]])
         table_data.append(row)
 
-    # Create the table
-    table_html = "<table style='width: 100%; border-collapse: collapse; border: 2px solid black;'>"
-    for row in table_data:
-        table_html += "<tr>"
-        for cell in row:
-            table_html += f"<td style='border: 1px solid black; padding: 8px; text-align: center;'>{cell}</td>"
-        table_html += "</tr>"
-    table_html += "</table>"
+    df = pd.DataFrame(table_data, columns=tp_headers)
+    st.table(df)
 
-    st.write(table_html, unsafe_allow_html=True)
+    st.markdown("---")  # Add a horizontal line
 
-    st.write(f"- Full Loss: {full_loss:.2f}")
+    # Use markdown for the results
+    for i in range(len(entry_prices)):
+        portfolio_after_tp = portfolio_size + profits[i][-1][0]
+        st.markdown(f"- **Portfolio after E{i + 1} -> Full TP:** {portfolio_after_tp:.2f}")
 
+    st.markdown(f"- **Full Loss:** {full_loss:.2f}")
+    st.markdown(f"- **Portfolio after Loss:** {portfolio_size - full_loss:.2f}")
 
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
@@ -87,10 +90,11 @@ def main():
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
                 portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits, liquidation_buffer, additional_risk
             )
-            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits)
+            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits, portfolio_size)
         else:
             st.warning("Please fill in all the required fields.")
 
 
 if __name__ == "__main__":
     main()
+    
