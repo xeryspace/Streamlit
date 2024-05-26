@@ -4,10 +4,21 @@ import random
 
 
 def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits,
-                   liquidation_buffer, additional_risk):
-    risk_amount = (portfolio_size * (risk_level / 100)) + additional_risk
-    risk_per_entry = [risk_amount * prop for prop in entry_proportions]
-    positions = [risk / ((price - stop_loss) / price) for price, risk in zip(entry_prices, risk_per_entry)]
+                   liquidation_buffer, additional_risk, is_long):
+    if additional_risk > 0:
+        temp_portfolio_size = portfolio_size - additional_risk
+        risk_amount = (temp_portfolio_size * (risk_level / 100))
+        total_risk = risk_amount + additional_risk
+    else:
+        risk_amount = (portfolio_size * (risk_level / 100))
+        total_risk = risk_amount
+
+    risk_per_entry = [total_risk * prop for prop in entry_proportions]
+
+    if is_long:
+        positions = [risk / ((price - stop_loss) / price) for price, risk in zip(entry_prices, risk_per_entry)]
+    else:
+        positions = [risk / ((stop_loss - price) / price) for price, risk in zip(entry_prices, risk_per_entry)]
 
     profits = []
     for i in range(len(entry_prices)):
@@ -20,20 +31,30 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
         for tp in take_profits:
             if tp != take_profits[-1]:
                 coins_to_trim = remaining_coins * 0.25
-                trim_profit = coins_to_trim * (tp - avg_buy_price)
+                if is_long:
+                    trim_profit = coins_to_trim * (tp - avg_buy_price)
+                else:
+                    trim_profit = coins_to_trim * (avg_buy_price - tp)
                 remaining_coins -= coins_to_trim
             else:
-                trim_profit = remaining_coins * (tp - avg_buy_price)
+                if is_long:
+                    trim_profit = remaining_coins * (tp - avg_buy_price)
+                else:
+                    trim_profit = remaining_coins * (avg_buy_price - tp)
             entry_profits.append((trim_profit, coins_to_trim if tp != take_profits[-1] else remaining_coins))
         profits.append(entry_profits)
 
     full_profit = profits[-1][-1][0]
-    full_loss = (portfolio_size * (risk_level / 100)) + additional_risk
-    liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
+    full_loss = total_risk
+    if is_long:
+        liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
+    else:
+        liquidation_price = stop_loss * (1 + liquidation_buffer / 100)
     return positions, profits, full_profit, full_loss, liquidation_price
 
 
-def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits, portfolio_size):
+def print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits,
+                  portfolio_size):
     st.subheader("Results")
 
     tp_headers = [""] + [f"TP {i + 1}: {tp:.4f}" for i, tp in enumerate(take_profits)]
@@ -57,11 +78,13 @@ def print_results(entry_prices, positions, profits, full_profit, full_loss, liqu
     st.markdown(f"- **Full Loss:** {full_loss:.2f}")
     st.markdown(f"- **Portfolio after Loss:** {portfolio_size - full_loss:.2f}")
 
+
 def main():
     st.set_page_config(page_title="Position Calculator", page_icon=":calculator:", layout="centered")
     st.title("Position Calculator")
 
     user = st.radio("Select User", ("Igor", "Erik"))
+    is_long = st.radio("Position Type", ("Long", "Short")) == "Long"
 
     if user == "Igor":
         default_portfolio_size = 300.0
@@ -84,9 +107,11 @@ def main():
             num_entries = len(entry_prices)
             entry_proportions = [1 / num_entries] * num_entries
             positions, profits, full_profit, full_loss, liquidation_price = calc_positions(
-                portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits, liquidation_buffer, additional_risk
+                portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits,
+                liquidation_buffer, additional_risk, is_long
             )
-            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits, portfolio_size)
+            print_results(entry_prices, positions, profits, full_profit, full_loss, liquidation_price, take_profits,
+                          portfolio_size)
         else:
             st.warning("Please fill in all the required fields.")
 
