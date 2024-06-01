@@ -57,13 +57,20 @@ def print_results(entry_prices, positions, avg_prices, cumulative_shares, origin
         """
     st.markdown(entries_container, unsafe_allow_html=True)
 
+    divider_container = f"""
+            <div>
+            -----------------------------
+            <span></span><br> 
+            <span></span><br> 
+            </div>
+            """
+    st.markdown(divider_container, unsafe_allow_html=True)
+
     # Wrap all the stats in a single div with background color
     stats_html = "".join(stats)
     stats_container = f"""
         <div style='background-color: #e2f0f1; padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
-        -----------------------------
-        <span></span><br> 
-        <span></span><br> 
+        
         {stats_html}
         </div>
         """
