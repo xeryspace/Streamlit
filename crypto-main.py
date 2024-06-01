@@ -20,18 +20,54 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
 def print_results(entry_prices, positions, avg_prices, cumulative_shares, original_entry_prices=None):
     st.subheader("Results")
     total_position_size = 0
+    entries = []
+    stats = []
+
     for i, (price, pos, avg_price, shares) in enumerate(zip(entry_prices, positions, avg_prices, cumulative_shares), start=1):
         total_position_size += pos
-        st.write(f"""
-        <div style='background-color: #e0e0e0; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>
-        <strong style='font-size: 35px;'>Entry {i}</strong><br>
-        <span style='font-size: 25px;'>E{i} Limitorder at: {str(price).rstrip('0').rstrip('.')} $</span><br>
-        <span style='font-size: 25px;'>E{i} Positionsize: {pos:.2f}$</span><br>
-        <span style='font-size: 25px;'>E{i} Avg Price: {avg_price:.5f} $</span><br>
-        <span style='font-size: 25px;'>Total Shares: {shares:.5f}</span><br>
-        <span style='font-size: 25px;'>Total Positionsize so far: {total_position_size:.2f}$</span>
+        entry_html = f"""
+        <div>
+        <strong style='font-size: 35px;'>Entry {i} Bids</strong><br>
+        <span style='font-size: 25px;'>Order at: {str(price).rstrip('0').rstrip('.')} $</span><br>
+        <span style='font-size: 25px;'>Amount: {pos:.2f}$</span>
+        <span></span><br> 
+        <span></span><br> 
         </div>
-        """, unsafe_allow_html=True)
+        """
+        entries.append(entry_html)
+
+        stats_html = f"""
+        <div>
+        <strong style='font-size: 35px;'>Stats after Entry {i}</strong><br>
+        <span style='font-size: 25px;'>Avg Price: {avg_price:.5f} $</span><br>
+        <span style='font-size: 25px;'>Total Shares: {shares:.5f}</span><br>
+        <span style='font-size: 25px;'>Total Amount so far: {total_position_size:.2f}$</span>
+        <span></span><br> 
+        <span></span><br> 
+        </div>
+        """
+        stats.append(stats_html)
+
+    # Print all the entries in a single div
+    entries_html = "".join(entries)
+    entries_container = f"""
+        <div style='background-color: #e2f0f1; padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
+        {entries_html}
+        </div>
+        """
+    st.markdown(entries_container, unsafe_allow_html=True)
+
+    # Wrap all the stats in a single div with background color
+    stats_html = "".join(stats)
+    stats_container = f"""
+        <div style='background-color: #e2f0f1; padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
+        -----------------------------
+        <span></span><br> 
+        <span></span><br> 
+        {stats_html}
+        </div>
+        """
+    st.markdown(stats_container, unsafe_allow_html=True)
 
 def calc_take_profits(entry_prices, positions, take_profits, cumulative_shares):
     st.subheader("Take Profits")
