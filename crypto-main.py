@@ -17,13 +17,15 @@ def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_pr
     liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
     return positions, avg_prices, profits, full_profit, full_loss, liquidation_price, cumulative_shares
 
+
 def print_results(entry_prices, positions, avg_prices, cumulative_shares, original_entry_prices=None):
     st.subheader("Results")
     total_position_size = 0
     entries = []
     stats = []
 
-    for i, (price, pos, avg_price, shares) in enumerate(zip(entry_prices, positions, avg_prices, cumulative_shares), start=1):
+    for i, (price, pos, avg_price, shares) in enumerate(zip(entry_prices, positions, avg_prices, cumulative_shares),
+                                                        start=1):
         total_position_size += pos
         entry_html = f"""
         <div>
@@ -38,7 +40,7 @@ def print_results(entry_prices, positions, avg_prices, cumulative_shares, origin
 
         stats_html = f"""
         <div>
-        <strong style='font-size: 35px;'>Stats after Entry {i}</strong><br>
+        <strong style='font-size: 35px;'>Stats after Entry {i} ({str(price).rstrip('0').rstrip('.')} $)</strong><br>
         <span style='font-size: 25px;'>Avg Price: {avg_price:.5f} $</span><br>
         <span style='font-size: 25px;'>Total Shares: {shares:.5f}</span><br>
         <span style='font-size: 25px;'>Total Amount so far: {total_position_size:.2f}$</span>
@@ -70,7 +72,7 @@ def print_results(entry_prices, positions, avg_prices, cumulative_shares, origin
     stats_html = "".join(stats)
     stats_container = f"""
         <div style='background-color: #e2f0f1; padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
-        
+
         {stats_html}
         </div>
         """
@@ -107,16 +109,18 @@ def main():
     user = st.radio("Select Mode", ("Spot", "Leverage"))
 
     if user == "Spot":
-        default_portfolio_size = 40000.0
-        base_risk_level = 0.75
+        default_portfolio_size = 38000.0
+        base_risk_level = 1
     else:
         default_portfolio_size = 5000.0
         base_risk_level = 2.0
 
     add_entries = st.checkbox("Add entries between provided ones", value=False)
+    evenly_distributed_entries = st.checkbox("Evenly distributed entries", value=False)
 
     with st.expander("Input Parameters", expanded=True):
         portfolio_size = st.number_input("Current Portfolio Size", value=default_portfolio_size)
+        base_risk_level = st.number_input("Base Risk", value=base_risk_level)
         previous_win_profit = st.number_input("Previous Winning Trade Profit (Optional)", value=0.0)
         entry_prices = st.text_input("Entry Prices (comma-separated)")
         stop_loss = st.number_input("Stop Loss", step=0.0000001, format="%0.7f")
@@ -132,9 +136,8 @@ def main():
                 entry_prices = []
                 for i in range(len(original_entry_prices) - 1):
                     entry_prices.append(original_entry_prices[i])
-                    price_diff = (original_entry_prices[i + 1] - original_entry_prices[i]) / 5
-                    for j in range(1, 5):
-                        entry_prices.append(original_entry_prices[i] + price_diff * j)
+                    price_diff = (original_entry_prices[i + 1] - original_entry_prices[i]) / 2
+                    entry_prices.append(original_entry_prices[i] + price_diff)
                 entry_prices.append(original_entry_prices[-1])
             else:
                 entry_prices = original_entry_prices
@@ -149,7 +152,36 @@ def main():
             risk_tolerance = (portfolio_size - og_risk_value) / portfolio_size * 100
 
             num_entries = len(entry_prices)
-            entry_proportions = [1/num_entries] * num_entries
+            if evenly_distributed_entries:
+                entry_proportions = [1/num_entries] * num_entries
+            else:
+                if num_entries == 2:
+                    entry_proportions = [0.35, 0.65]
+                elif num_entries == 3:
+                    entry_proportions = [0.15, 0.35, 0.50]
+                elif num_entries == 4:
+                    entry_proportions = [0.10, 0.15, 0.25, 0.50]
+                elif num_entries == 5:
+                    entry_proportions = [0.05, 0.10, 0.15, 0.25, 0.45]
+                elif num_entries == 6:
+                    entry_proportions = [0.05, 0.08, 0.12, 0.15, 0.25, 0.35]
+                elif num_entries == 7:
+                    entry_proportions = [0.03, 0.05, 0.07, 0.10, 0.15, 0.25, 0.35]
+                elif num_entries == 8:
+                    entry_proportions = [0.02, 0.03, 0.05, 0.07, 0.10, 0.15, 0.25, 0.33]
+                elif num_entries == 9:
+                    entry_proportions = [0.02, 0.03, 0.05, 0.07, 0.08, 0.10, 0.15, 0.20, 0.30]
+                elif num_entries == 10:
+                    entry_proportions = [0.02, 0.03, 0.05, 0.06, 0.07, 0.08, 0.09, 0.15, 0.20, 0.25]
+                elif num_entries == 11:
+                    entry_proportions = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.14, 0.20, 0.30]
+                elif num_entries == 12:
+                    entry_proportions = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.15, 0.20, 0.20]
+                else:
+                    st.warning(
+                        f"This script currently supports up to 12 entries for non-even distribution. You provided {num_entries} entries.")
+                    return
+
             positions, avg_prices, profits, full_profit, full_loss, liquidation_price, cumulative_shares = calc_positions(
                 portfolio_size, risk_tolerance, entry_prices, stop_loss, entry_proportions, take_profits, liquidation_buffer
             )
