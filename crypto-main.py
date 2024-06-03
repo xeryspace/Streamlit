@@ -1,24 +1,34 @@
 import streamlit as st
 import random
 
-def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits, liquidation_buffer):
-    risk_amount = portfolio_size * (risk_level / 100)
+
+def calc_positions(portfolio_size, risk_level, entry_prices, stop_loss, entry_proportions, take_profits,
+                   liquidation_buffer):
+    risk_amount = portfolio_size * (risk_level / 100) / 3  # Adjusted for the 3x issue
     risk_per_entry = [risk_amount * prop for prop in entry_proportions]
-    positions = [risk / ((price - stop_loss) / price) for price, risk in zip(entry_prices, risk_per_entry)]
-    avg_prices = [sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(positions[:i + 1])
-                  for i in range(len(entry_prices))]
-    profits = [sum(positions[:i + 1]) * (
-            take_profits[-1] - sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
-        positions[:i + 1])) / (
-                       sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
-                   positions[:i + 1])) for i in range(len(entry_prices))]
+
+    positions = []
+    for price, risk in zip(entry_prices, risk_per_entry):
+        pos = risk / abs((price - stop_loss) / price)
+        positions.append(pos)
+
+    avg_prices = [
+        sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(positions[:i + 1])
+        for i in range(len(entry_prices))]
+
+    profits = [sum(positions[:i + 1]) * (take_profits[-1] - sum(
+        price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(positions[:i + 1])) / (
+                           sum(price * pos for price, pos in zip(entry_prices[:i + 1], positions[:i + 1])) / sum(
+                       positions[:i + 1])) for i in range(len(entry_prices))]
+
     cumulative_shares = [sum(positions[:i + 1]) / avg_prices[i] for i in range(len(entry_prices))]
-    full_profit, full_loss = profits[-1], portfolio_size * (risk_level / 100)
+
+    full_profit, full_loss = profits[-1], risk_amount * 3  # Adjusted for the 3x issue
     liquidation_price = stop_loss * (1 - liquidation_buffer / 100)
+
     return positions, avg_prices, profits, full_profit, full_loss, liquidation_price, cumulative_shares
 
-
-def print_results(entry_prices, positions, avg_prices, cumulative_shares, original_entry_prices=None):
+def print_results(entry_prices, positions, avg_prices, cumulative_shares, full_loss, original_entry_prices=None):
     st.subheader("Results")
     total_position_size = 0
     entries = []
@@ -78,6 +88,15 @@ def print_results(entry_prices, positions, avg_prices, cumulative_shares, origin
         """
     st.markdown(stats_container, unsafe_allow_html=True)
 
+    # Display total loss
+    total_loss_html = f"""
+        <div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
+        <strong style='font-size: 35px;'>Total Loss if Stop Loss is Hit</strong><br>
+        <span style='font-size: 25px;'>Total Loss: {full_loss:.2f}$</span>
+        </div>
+        """
+    st.markdown(total_loss_html, unsafe_allow_html=True)
+
 def calc_take_profits(entry_prices, positions, take_profits, cumulative_shares):
     st.subheader("Take Profits")
     total_shares = cumulative_shares[-1]
@@ -110,10 +129,10 @@ def main():
 
     if user == "Spot":
         default_portfolio_size = 38000.0
-        base_risk_level = 1
+        base_risk_level = 0.8
     else:
-        default_portfolio_size = 5000.0
-        base_risk_level = 2.0
+        default_portfolio_size = 4400.0
+        base_risk_level = 1
 
     add_entries = st.checkbox("Add entries between provided ones", value=False)
     evenly_distributed_entries = st.checkbox("Evenly distributed entries", value=False)
@@ -185,7 +204,7 @@ def main():
             positions, avg_prices, profits, full_profit, full_loss, liquidation_price, cumulative_shares = calc_positions(
                 portfolio_size, risk_tolerance, entry_prices, stop_loss, entry_proportions, take_profits, liquidation_buffer
             )
-            print_results(entry_prices, positions, avg_prices, cumulative_shares, original_entry_prices)
+            print_results(entry_prices, positions, avg_prices, cumulative_shares, full_loss, original_entry_prices)
 
         else:
             st.warning("Please fill in all the required fields.")
